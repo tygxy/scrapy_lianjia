@@ -54,10 +54,32 @@
 
 ### 2.3 结果展示
 
-![](raw/figure6.png?raw=true)
+![](raw/figure7.png?raw=true)
 
 ## 3.爬取链家成交数据
 
 ### 3.1 任务分析
 
-- 第一步：六区共50W条数据，通过上一个任务爬到7k个小区URL，做适当的字符串修改构造出新的URL，可以爬到小区成交数据list和小区总成交量，通过总成交量
+- 第一步：六区共50W条数据，通过上一个任务爬到7k个小区URL，做适当的字符串修改构造出新的URL，可以爬到小区成交数据list的第一页和小区总成交量
+
+- 第二步：由小区成交量/30可以得到小区list的数量，构造出URL
+
+- 第三步：通过第二步得出的URL，爬到相关字段
+
+### 3.2 执行命名
+
+- 第一步的程序在scrapytest/spiders/Spider_xiaoquchengjiaoList.py中
+
+- 执行 scrapy crawl Spider_xiaoquchengjiaoList,数据保存在xiaoquchengjiaoList.json中
+
+- 第二步的程序在scrapytest/spiders/Spider_xiaoquchengjiao.py
+
+- 执行 scrapy crawl Spider_xiaoquchengjiao,数据保存在xiaoquchengjiao.json中
+
+- 第三步，将json格式的数据写入excel中，执行python makefile.py,生成7K个Excel
+
+### 3.3 结果展示
+
+![](raw/figure8.png?raw=true)
+
+
