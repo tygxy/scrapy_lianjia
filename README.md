@@ -4,6 +4,8 @@
 
 ## 1.任务需求
 
+- 爬虫的内容在我这边主要是两个，一个是北京六城区所有小区的基本信息，数据量在7K条左右。第二个是北京六城区所有成交记录，数据量在50W条左右。
+
 ### 1.1 北京六城区小区数据
 
 - 小区页面URL
@@ -36,13 +38,16 @@
 
 ### 2.1 任务分析
 
-- 第一步：由于链家在小区列表最多能呈现100个页面，所以不能直接从list爬到所有小区URL，需要细分到六个城区分别爬取小区的详细页面URL
+- 分两步，第一步需要在http://bj.lianjia.com/xiaoqu/ 列表中爬到所有小区详细页面的URL，第二步是到具体的小区URL爬到相关信息。
 
-- 第二步：在小区详细页面中爬取所需字段
+- 但是链家网的网页有两个特征需要注意，第一是任何一个列表页面，一页最多能展示30条数据，而且最多只有100页。也就是说，在/xiaoqu/这个URL中，最多只能爬到3000个小区。解决办法就是细分到城区这个级别，比如/xiaoqu/dongcheng/，东城1142个小区，小于3000条，可行。
 
-### 2.2 执行命令
+- 第二个特征是每个页面的页脚是js动态生成的，页脚包含着页数等信息。处理翻页时就不能直接获取到下一页的URL，只能通过观察找到其中的规律，人工构造出下一页的URL并判断起止。
 
-- 第一步的程序在scrapytest/spiders/Spider_xiaoquList.py中，在爬取不同城区时需要手动修改start_urls
+
+### 2.2 爬小区详细页面的URL
+
+- Scrapy的程序比较简单，只需要几步简单的设置，在start_urls()中放入目标URL，item容器保存数据，xpath()语法规则爬取页面的元素。简单学习下就可以使用了，这里就不多做介绍
 
 ```python
 # -*- coding: utf-8 -*-
@@ -79,6 +84,10 @@ class Spider_xiaoquList(scrapy.Spider):
 > scrapy crawl Spider_xiaoquList
 ```
 
+![](raw/num4.png?raw=true)
+
+### 2.3 爬取小区相关字段
+
 - 第二步的程序在scrapytest/spiders/Spider_xiaoquDetial.py,读取xiaoquList.json中的小区详细页面的URL
 
 - 执行 scrapy crawl Spider_xiaoquDetial,数据保存在xiaoquDetial.json中
@@ -86,6 +95,10 @@ class Spider_xiaoquList(scrapy.Spider):
 ```python
 > scrapy crawl Spider_xiaoquDetial
 ```
+
+![](raw/num5.png?raw=true)
+
+### 2.4 JSon格式转换成Excel
 
 - 第三步，将json格式的数据写入excel中，执行python JsonToExcel.py,生成六个Excel表格
 
@@ -127,21 +140,24 @@ book.close()
 
 ```
 
-### 2.3 结果展示
+### 2.5 结果展示
+
+![](raw/num7.png?raw=true)
+
 
 ![](raw/figure7.png?raw=true)
+
 
 ## 3.爬取链家成交数据
 
 ### 3.1 任务分析
 
-- 第一步：六区共50W条数据，通过上一个任务爬到7k个小区URL，做适当的字符串修改构造出新的URL，可以爬到小区成交数据list的第一页和小区总成交量
+- 这个任务的数据量就比之前的大了一两个数量级，而且不能够从城区这个角度爬，因为每个城区的成交记录也都在万这个级别，显然大于3000的限制。所以需要细分到每个小区，分别爬取每个小区的成交记录。
 
-- 第二步：由小区成交量/30可以得到小区list的数量，构造出URL
+- 还有一个问题，就是由于不能爬到页数，导致需要我们专门写个程序判断页数。我的处理方法是：第一步先爬取小区成交的起始URL和小区成交总数。第二步通过小区成交总数/30+1，可以计算出这个小区成交总页数。第三步就是构造出相应的URL。
 
-- 第三步：通过第二步得出的URL，爬到相关字段
 
-### 3.2 执行命名
+### 3.2 爬小区URL+成交总数
 
 - 第一步的程序在scrapytest/spiders/Spider_xiaoquchengjiaoList.py中
 
@@ -149,6 +165,9 @@ book.close()
 ```python
 scrapy crawl Spider_xiaoquchengjiaoList
 ```
+![](raw/num3.png?raw=true)
+
+### 3.3 爬小区成交记录
 
 - 第二步的程序在scrapytest/spiders/Spider_xiaoquchengjiao.py
 
@@ -157,6 +176,10 @@ scrapy crawl Spider_xiaoquchengjiaoList
 ```python
 scrapy crawl Spider_xiaoquchengjiao
 ```
+
+![](raw/num11.png?raw=true)
+
+### 3.4 JSon格式转换成Excel
 
 - 第三步，将json格式的数据写入excel中，执行python makefile.py,生成7K个Excel
 
@@ -227,7 +250,7 @@ for i in range(0,len(xiaoquNameList)):
 
 ### 3.3 结果展示
 
-![](raw/figure8.png?raw=true)
+![](raw/num12.png?raw=true)
 
 
 
